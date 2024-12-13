@@ -32,7 +32,7 @@ func main() {
     r := gin.Default()
 
     r.POST("/launch", launchHandler)
-    r.POST("/next-level", nextLevelHandler)
+    r.POST("/end-level", endLevelHandler)
 
     fmt.Println("Starting server at port 8080")
     if err := r.Run(":8080"); err != nil {
@@ -41,7 +41,7 @@ func main() {
 }
 
 type LaunchRequest struct {
-    DeviceUUID         string `json:"deviceUUID"`
+    DeviceUUID   string `json:"deviceUUID"`
     Brand        string `json:"brand"`
     DeviceType   string `json:"deviceType"`
     IsDevice     bool   `json:"isDevice"`
@@ -61,8 +61,6 @@ func launchHandler(c *gin.Context) {
 
     ctx := context.Background()
 
-
-    // Get user if exists, otherwise create a new user
     user, err := client.User.UpsertOne(
         db.User.DeviceUUID.Equals(req.DeviceUUID),
     ).Create(
@@ -74,7 +72,7 @@ func launchHandler(c *gin.Context) {
         db.User.OpenCount.Increment(1),
     ).Exec(ctx)
     if err != nil {
-        fmt.Println(err)
+        fmt.Println("Failed to create user", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
         return
     }
@@ -100,32 +98,28 @@ func launchHandler(c *gin.Context) {
         db.UserDevice.OsVersion.Set(req.OsVersion),
     ).Exec(ctx)
     if err != nil {
-        fmt.Println(err)
+        fmt.Println("Failed to create user device", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user device"})
         return
     }
 
-    currentLevel, err := getCurrentLevel(user.ID)
-    if err != nil {
-        fmt.Println(err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "InternalError"})
-        return
-    }
+    currentLevel := getCurrentLevel(user.ID)
 
     response := map[string]interface{}{"userId": user.ID, "level": currentLevel}
     c.JSON(http.StatusOK, response)
 }
 
-type NextLevelRequest struct {
+type LevelInfo struct {
     UserID    string `json:"userId"`
     Level     int `json:"level"`
     Attempts  int `json:"attempts"`
     TimeSpent int `json:"timeSpent"`
 }
 
-func nextLevelHandler(c *gin.Context) {
-    var req NextLevelRequest
+func endLevelHandler(c *gin.Context) {
+    var req LevelInfo
     if err := c.ShouldBindJSON(&req); err != nil {
+        fmt.Println(err)
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
         return
     }
@@ -139,6 +133,7 @@ func nextLevelHandler(c *gin.Context) {
         db.LevelHistory.User.Link(db.User.ID.Equals(req.UserID)),
     ).Exec(ctx)
     if err != nil {
+        fmt.Println(err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create level history"})
         return
     }
@@ -153,20 +148,17 @@ func calculateRank(attempts, timeSpent int) int {
     return 100 - (attempts * 2) - (timeSpent / 10)
 }
 
-func getCurrentLevel(userID string) (int, error) {
+func getCurrentLevel(userID string) (int) {
     ctx := context.Background()
-    levelHistory, err := client.LevelHistory.FindMany(
+    levelHistory, err := client.LevelHistory.FindFirst(
         db.LevelHistory.UserID.Equals(userID),
     ).OrderBy(
-        db.LevelHistory.ID.Order(db.DESC),
+        db.LevelHistory.Level.Order(db.DESC),
     ).Exec(ctx)
     if err != nil {
-        return 0, err
+        fmt.Println(err)
+        return 1
     }
 
-    if len(levelHistory) == 0 {
-        return 1, nil // Default to level 1 if no history is found
-    }
-
-    return levelHistory[0].Level, nil
+    return levelHistory.Level
 }
