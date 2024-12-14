@@ -110,8 +110,8 @@ func launchHandler(c *gin.Context) {
 }
 
 type LevelInfo struct {
-    UserID    string `json:"userId"`
     Level     int `json:"level"`
+    UserID    string `json:"userId"`
     Attempts  int `json:"attempts"`
     TimeSpent int `json:"timeSpent"`
 }
@@ -125,8 +125,17 @@ func endLevelHandler(c *gin.Context) {
     }
 
     ctx := context.Background()
+
+    level := getCurrentLevel(req.UserID)
+
+    if req.Level != level {
+        fmt.Print("Invalid level")
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid level"})
+        return
+    }
+
     _, err := client.LevelHistory.CreateOne(
-        db.LevelHistory.Level.Set(req.Level),
+        db.LevelHistory.Level.Set(level),
         db.LevelHistory.Attempts.Set(req.Attempts),
         db.LevelHistory.TimeSpent.Set(req.TimeSpent),
         db.LevelHistory.Rank.Set(calculateRank(req.Attempts, req.TimeSpent)),
@@ -138,9 +147,8 @@ func endLevelHandler(c *gin.Context) {
         return
     }
 
-    nextLevel := req.Level + 1
     rank := calculateRank(req.Attempts, req.TimeSpent)
-    response := map[string]int{"next_level": nextLevel, "rank": rank}
+    response := map[string]int{"nextLevel": level + 1, "rank": rank}
     c.JSON(http.StatusOK, response)
 }
 
@@ -156,9 +164,7 @@ func getCurrentLevel(userID string) (int) {
         db.LevelHistory.Level.Order(db.DESC),
     ).Exec(ctx)
     if err != nil {
-        fmt.Println(err)
         return 1
     }
-
-    return levelHistory.Level
+    return levelHistory.Level + 1
 }
