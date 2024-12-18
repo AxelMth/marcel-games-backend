@@ -9,6 +9,8 @@ import (
 
 	"main/db"
 
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,6 +35,7 @@ func main() {
 
     r.POST("/launch", launchHandler)
     r.POST("/end-level", endLevelHandler)
+    r.GET("/next-level", getNextLevel)
 
     fmt.Println("Starting server at port 8080")
     if err := r.Run(":8080"); err != nil {
@@ -103,9 +106,9 @@ func launchHandler(c *gin.Context) {
         return
     }
 
-    currentLevel := getCurrentLevel(user.ID)
+    currentLevel := getLastLevelFromHistory(user.ID)
 
-    response := map[string]interface{}{"userId": user.ID, "level": currentLevel}
+    response := map[string]interface{}{"userId": user.ID, "level": currentLevel + 1}
     c.JSON(http.StatusOK, response)
 }
 
@@ -126,16 +129,18 @@ func endLevelHandler(c *gin.Context) {
 
     ctx := context.Background()
 
-    level := getCurrentLevel(req.UserID)
+    level := getLastLevelFromHistory(req.UserID)
 
-    if req.Level != level {
+    fmt.Println("Level", level)
+    fmt.Println("Asked level", req.Level)
+    if req.Level != level + 1 {
         fmt.Print("Invalid level")
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid level"})
         return
     }
 
     _, err := client.LevelHistory.CreateOne(
-        db.LevelHistory.Level.Set(level),
+        db.LevelHistory.Level.Set(level + 1),
         db.LevelHistory.Attempts.Set(req.Attempts),
         db.LevelHistory.TimeSpent.Set(req.TimeSpent),
         db.LevelHistory.Rank.Set(calculateRank(req.Attempts, req.TimeSpent)),
@@ -148,7 +153,35 @@ func endLevelHandler(c *gin.Context) {
     }
 
     rank := calculateRank(req.Attempts, req.TimeSpent)
-    response := map[string]int{"nextLevel": level + 1, "rank": rank}
+    response := map[string]int{"rank": rank}
+    c.JSON(http.StatusOK, response)
+}
+
+type NextLevel struct {
+    Level     int `json:"level"`
+    UserID    string `json:"userId"`
+}
+
+func getNextLevel(c *gin.Context) {
+    // Level is int, so it will be 0 if not provide
+    levelQuery := c.Query("level")
+    level, err := strconv.Atoi(levelQuery)
+    if err != nil {
+        fmt.Println("Invalid level query parameter", err)
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid level query parameter"})
+        return
+    }
+
+    userId    := c.Query("userId")
+    currentLevel := getLastLevelFromHistory(userId)
+
+    if level != currentLevel {
+        fmt.Print("Invalid level")
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid level"})
+        return
+    }
+
+    response := map[string]int{"nextLevel": level + 1}
     c.JSON(http.StatusOK, response)
 }
 
@@ -156,7 +189,7 @@ func calculateRank(attempts, timeSpent int) int {
     return 100 - (attempts * 2) - (timeSpent / 10)
 }
 
-func getCurrentLevel(userID string) (int) {
+func getLastLevelFromHistory(userID string) (int) {
     ctx := context.Background()
     levelHistory, err := client.LevelHistory.FindFirst(
         db.LevelHistory.UserID.Equals(userID),
@@ -164,7 +197,7 @@ func getCurrentLevel(userID string) (int) {
         db.LevelHistory.Level.Order(db.DESC),
     ).Exec(ctx)
     if err != nil {
-        return 1
+        return 0
     }
-    return levelHistory.Level + 1
+    return levelHistory.Level
 }
