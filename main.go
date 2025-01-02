@@ -131,10 +131,8 @@ func endLevelHandler(c *gin.Context) {
 
     level := getLastLevelFromHistory(req.UserID)
 
-    fmt.Println("Level", level)
-    fmt.Println("Asked level", req.Level)
     if req.Level != level + 1 {
-        fmt.Print("Invalid level")
+        fmt.Println("Invalid level", req.Level, level)
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid level"})
         return
     }
@@ -147,7 +145,7 @@ func endLevelHandler(c *gin.Context) {
         db.LevelHistory.User.Link(db.User.ID.Equals(req.UserID)),
     ).Exec(ctx)
     if err != nil {
-        fmt.Println(err)
+        fmt.Println("Failed to create level history", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create level history"})
         return
     }
@@ -176,7 +174,7 @@ func getNextLevel(c *gin.Context) {
     currentLevel := getLastLevelFromHistory(userId)
 
     if level != currentLevel {
-        fmt.Print("Invalid level")
+        fmt.Print("Invalid level", level, currentLevel)
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid level"})
         return
     }
