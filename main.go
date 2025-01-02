@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"main/db"
+	"marcel-games-backend/db"
 
 	"strconv"
 
