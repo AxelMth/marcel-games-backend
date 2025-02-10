@@ -156,11 +156,11 @@ func calculateRankForLevel(level int, attempts int, timeSpent int) int {
         return 1
     }
 
-    currentScore := 100 - (attempts * 2) - (timeSpent / 10)
+    currentScore := calculateScore(attempts, timeSpent)
 
     betterThan := 0
     for _, history := range levelHistories {
-        otherScore := 100 - (history.Attempts * 2) - (history.TimeSpent / 10)
+        otherScore := calculateScore(history.Attempts, history.TimeSpent)
         if currentScore > otherScore {
             betterThan++
         }
@@ -171,6 +171,10 @@ func calculateRankForLevel(level int, attempts int, timeSpent int) int {
     }
     
     return 100
+}
+
+func calculateScore(attempts int, timeSpent int) int {
+    return 100 - (attempts * 2) - (timeSpent / 10)
 }
 
 func getLastLevelFromHistory(userID string) (int) {
