@@ -9,8 +9,6 @@ import (
 
 	"marcel-games-backend/db"
 
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -113,7 +111,6 @@ func launchHandler(c *gin.Context) {
 }
 
 type LevelInfo struct {
-    Level     int `json:"level"`
     UserID    string `json:"userId"`
     Attempts  int `json:"attempts"`
     TimeSpent int `json:"timeSpent"`
@@ -130,12 +127,6 @@ func endLevelHandler(c *gin.Context) {
     ctx := context.Background()
 
     level := getLastLevelFromHistory(req.UserID)
-
-    if req.Level != level + 1 {
-        fmt.Println("Invalid level", req.Level, level)
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid level"})
-        return
-    }
 
     _, err := client.LevelHistory.CreateOne(
         db.LevelHistory.Level.Set(level + 1),
@@ -156,30 +147,21 @@ func endLevelHandler(c *gin.Context) {
 }
 
 type NextLevel struct {
-    Level     int `json:"level"`
     UserID    string `json:"userId"`
 }
 
 func getNextLevel(c *gin.Context) {
-    // Level is int, so it will be 0 if not provide
-    levelQuery := c.Query("level")
-    level, err := strconv.Atoi(levelQuery)
-    if err != nil {
-        fmt.Println("Invalid level query parameter", err)
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid level query parameter"})
+    var req NextLevel
+    if err := c.ShouldBindJSON(&req); err != nil {
+        fmt.Println(err)
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
         return
     }
 
     userId    := c.Query("userId")
     currentLevel := getLastLevelFromHistory(userId)
 
-    if level != currentLevel {
-        fmt.Print("Invalid level", level, currentLevel)
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid level"})
-        return
-    }
-
-    response := map[string]int{"nextLevel": level + 1}
+    response := map[string]int{"nextLevel": currentLevel + 1}
     c.JSON(http.StatusOK, response)
 }
 
