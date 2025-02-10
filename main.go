@@ -151,14 +151,8 @@ type NextLevel struct {
 }
 
 func getNextLevel(c *gin.Context) {
-    var req NextLevel
-    if err := c.ShouldBindJSON(&req); err != nil {
-        fmt.Println(err)
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-        return
-    }
-
     userId    := c.Query("userId")
+
     currentLevel := getLastLevelFromHistory(userId)
 
     response := map[string]int{"nextLevel": currentLevel + 1}
