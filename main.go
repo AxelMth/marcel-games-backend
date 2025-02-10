@@ -127,11 +127,13 @@ func endLevelHandler(c *gin.Context) {
 
     level := getLastLevelFromHistory(req.UserID)
 
+    rank := calculateRankForLevel(level, req.Attempts, req.TimeSpent)
+    
     _, err := client.LevelHistory.CreateOne(
         db.LevelHistory.Level.Set(level + 1),
         db.LevelHistory.Attempts.Set(req.Attempts),
         db.LevelHistory.TimeSpent.Set(req.TimeSpent),
-        db.LevelHistory.Rank.Set(calculateRank(req.Attempts, req.TimeSpent)),
+        db.LevelHistory.Rank.Set(rank),
         db.LevelHistory.User.Link(db.User.ID.Equals(req.UserID)),
     ).Exec(ctx)
     if err != nil {
@@ -140,13 +142,35 @@ func endLevelHandler(c *gin.Context) {
         return
     }
 
-    rank := calculateRank(req.Attempts, req.TimeSpent)
     response := map[string]int{"rank": rank, "nextLevel": level + 2}
     c.JSON(http.StatusOK, response)
 }
 
-func calculateRank(attempts, timeSpent int) int {
-    return 100 - (attempts * 2) - (timeSpent / 10)
+func calculateRankForLevel(level int, attempts int, timeSpent int) int {
+    ctx := context.Background()
+    
+    levelHistories, err := client.LevelHistory.FindMany(
+        db.LevelHistory.Level.Equals(level),
+    ).Exec(ctx)
+    if err != nil {
+        return 1
+    }
+
+    currentScore := 100 - (attempts * 2) - (timeSpent / 10)
+
+    betterThan := 0
+    for _, history := range levelHistories {
+        otherScore := 100 - (history.Attempts * 2) - (history.TimeSpent / 10)
+        if currentScore > otherScore {
+            betterThan++
+        }
+    }
+
+    if len(levelHistories) > 0 {
+        return (betterThan * 100) / len(levelHistories)
+    }
+    
+    return 100
 }
 
 func getLastLevelFromHistory(userID string) (int) {
