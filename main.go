@@ -33,7 +33,6 @@ func main() {
 
     r.POST("/launch", launchHandler)
     r.POST("/end-level", endLevelHandler)
-    r.GET("/next-level", getNextLevel)
 
     fmt.Println("Starting server at port 8080")
     if err := r.Run(":8080"); err != nil {
@@ -142,20 +141,7 @@ func endLevelHandler(c *gin.Context) {
     }
 
     rank := calculateRank(req.Attempts, req.TimeSpent)
-    response := map[string]int{"rank": rank}
-    c.JSON(http.StatusOK, response)
-}
-
-type NextLevel struct {
-    UserID    string `json:"userId"`
-}
-
-func getNextLevel(c *gin.Context) {
-    userId    := c.Query("userId")
-
-    currentLevel := getLastLevelFromHistory(userId)
-
-    response := map[string]int{"nextLevel": currentLevel + 1}
+    response := map[string]int{"rank": rank, "nextLevel": level + 2}
     c.JSON(http.StatusOK, response)
 }
 
