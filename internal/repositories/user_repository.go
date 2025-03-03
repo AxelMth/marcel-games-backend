@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+func GetUserByID(ctx context.Context, id string) (*db.UserModel, error) {
+	user, err := db.Client().User.FindUnique(
+		db.User.ID.Equals(id),
+	).Exec(ctx)
+	return user, err
+}
+
 func UpsertOneUser(ctx context.Context, 
 	deviceUUID string,
 	) (*db.UserModel, error) {
