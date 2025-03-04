@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"marcel-games-backend/internal/repositories"
+	"marcel-games-backend/pkg/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -58,6 +59,6 @@ func LaunchHandler(c *gin.Context) {
 
 	currentLevel := repositories.GetLastLevelFromHistory(ctx, user.ID)
 
-	response := map[string]interface{}{"userId": user.ID, "level": currentLevel + 1}
+	response := gin.H{"userId": user.ID, "level": currentLevel + 1, "countryCodes": utils.GetNextLevelCountryCodes(currentLevel + 1)}
 	c.JSON(http.StatusOK, response)
 }
