@@ -16,7 +16,7 @@ type LevelInfo struct {
     TimeSpent int `json:"timeSpent"`
 }
 
-func EndLevelHandler(c *gin.Context) {
+func LevelHandler(c *gin.Context) {
     var req LevelInfo
     if err := c.ShouldBindJSON(&req); err != nil {
         fmt.Println(err)
