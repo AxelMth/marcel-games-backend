@@ -7,11 +7,24 @@ import (
 )
 
 func GetNextLevelCountryCodes(level int) []string {
-	count := getNumberOfCountries(level)
+	sorted := sortCountriesByArea(constants.Countries)
 
+	countryCount := getNumberOfCountries(level)
+	countrySelectWindow := getCountrySelectWindow(level)
+	availableCountries := sorted[:countryCount+countrySelectWindow]
+
+	result := make([]string, 0, countryCount)
+	indices := rand.Perm(len(availableCountries))[:countryCount]
+	for _, idx := range indices {
+		result = append(result, availableCountries[idx].Code)
+	}
+
+	return result
+}
+
+func sortCountriesByArea(countries []constants.Country) []constants.Country {
 	sorted := make([]constants.Country, len(constants.Countries))
 	copy(sorted, constants.Countries)
-
 	slices.SortFunc(sorted, func(i, j constants.Country) int {
 		if i.Area > j.Area {
 			return -1
@@ -21,17 +34,7 @@ func GetNextLevelCountryCodes(level int) []string {
 		}
 		return 0
 	})
-
-	// Select count + getCountrySelectWindow(level) first countries
-	availableCountries := sorted[:count+getCountrySelectWindow(level)]
-
-	result := make([]string, 0, count)
-	indices := rand.Perm(len(availableCountries))[:count]
-	for _, idx := range indices {
-		result = append(result, availableCountries[idx].Country)
-	}
-
-	return result
+	return sorted
 }
 
 func getCountrySelectWindow(level int) int {
