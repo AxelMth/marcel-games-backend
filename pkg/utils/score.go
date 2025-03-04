@@ -6,32 +6,32 @@ import (
 )
 
 func CalculateRankForLevel(level int, attempts int, timeSpent int) int {
-    ctx := context.Background()
-    
-    levelHistories, err := db.Client().LevelHistory.FindMany(
-        db.LevelHistory.Level.Equals(level),
-    ).Exec(ctx)
-    if err != nil {
-        return 1
-    }
+	ctx := context.Background()
 
-    currentScore := calculateScore(attempts, timeSpent)
+	levelHistories, err := db.Client().LevelHistory.FindMany(
+		db.LevelHistory.Level.Equals(level),
+	).Exec(ctx)
+	if err != nil {
+		return 1
+	}
 
-    betterThan := 0
-    for _, history := range levelHistories {
-        otherScore := calculateScore(history.Attempts, history.TimeSpent)
-        if currentScore > otherScore {
-            betterThan++
-        }
-    }
+	currentScore := calculateScore(attempts, timeSpent)
 
-    if len(levelHistories) > 0 {
-        return (betterThan * 100) / len(levelHistories)
-    }
-    
-    return 100
+	betterThan := 0
+	for _, history := range levelHistories {
+		otherScore := calculateScore(history.Attempts, history.TimeSpent)
+		if currentScore > otherScore {
+			betterThan++
+		}
+	}
+
+	if len(levelHistories) > 0 {
+		return (betterThan * 100) / len(levelHistories)
+	}
+
+	return 100
 }
 
 func calculateScore(attempts int, timeSpent int) int {
-    return 100 - (attempts * 2) - (timeSpent / 10)
+	return 100 - (attempts * 2) - (timeSpent / 10)
 }
