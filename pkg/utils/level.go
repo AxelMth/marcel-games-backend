@@ -7,7 +7,7 @@ import (
 )
 
 func GetNextLevelCountryCodes(level int) []string {
-	sorted := sortCountriesByArea(constants.Countries)
+	sorted := sortCountriesByArea()
 
 	countryCount := getNumberOfCountries(level)
 	countrySelectWindow := getCountrySelectWindow(level)
@@ -22,7 +22,7 @@ func GetNextLevelCountryCodes(level int) []string {
 	return result
 }
 
-func sortCountriesByArea(countries []constants.Country) []constants.Country {
+func sortCountriesByArea() []constants.Country {
 	sorted := make([]constants.Country, len(constants.Countries))
 	copy(sorted, constants.Countries)
 	slices.SortFunc(sorted, func(i, j constants.Country) int {
