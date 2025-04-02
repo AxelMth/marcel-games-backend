@@ -1,5 +1,14 @@
 # marcel-games-backend
 
+
+## Setup
+
+Install dependencies
+
+```bash
+go mod tidy
+```
+
 ## Development mode
 
 ```bash
