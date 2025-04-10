@@ -13,7 +13,7 @@ COPY . ./
 # Generate Prisma client
 RUN go run github.com/steebchen/prisma-client-go generate
 
-RUN go build -v -o ./run-app .
+RUN go build -v -o ./run-app ./cmd/api
 
 FROM alpine:latest
 
