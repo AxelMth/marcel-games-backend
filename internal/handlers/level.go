@@ -63,7 +63,6 @@ type FinishLevelInfo struct {
 }
 
 type FinishLevelResponse struct {
-	Rank             int      `json:"rank"`
 	NextLevel        int      `json:"nextLevel"`
 	NextCountryCodes []string `json:"nextCountryCodes"`
 }
@@ -80,15 +79,12 @@ func FinishLevelHandler(c *gin.Context) {
 
 	level := repositories.GetLastLevelFromHistory(ctx, req.UserID)
 
-	rank := utils.CalculateRankForLevel(level, req.Attempts, req.TimeSpent)
-
 	_, err := repositories.CreateOneLevelHistory(
 		ctx,
 		req.UserID,
 		level+1,
 		req.Attempts,
 		req.TimeSpent,
-		rank,
 	)
 
 	if err != nil {
@@ -98,7 +94,6 @@ func FinishLevelHandler(c *gin.Context) {
 	}
 
 	response := FinishLevelResponse{
-		Rank:             rank,
 		NextLevel:        level + 2,
 		NextCountryCodes: utils.GetLevelCountryCodesForLevel(level + 2),
 	}

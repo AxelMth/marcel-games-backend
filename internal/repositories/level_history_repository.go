@@ -11,13 +11,11 @@ func CreateOneLevelHistory(
 	level int,
 	attempts int,
 	timeSpent int,
-	rank int,
 ) (*db.LevelHistoryModel, error) {
 	levelHistory, err := db.Client().LevelHistory.CreateOne(
 		db.LevelHistory.Level.Set(level),
 		db.LevelHistory.Attempts.Set(attempts),
 		db.LevelHistory.TimeSpent.Set(timeSpent),
-		db.LevelHistory.Rank.Set(rank),
 		db.LevelHistory.User.Link(db.User.ID.Equals(userID)),
 	).Exec(ctx)
 	return levelHistory, err
