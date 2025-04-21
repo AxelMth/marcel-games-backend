@@ -9,7 +9,7 @@ func Test_CountryCodesAreReturned(t *testing.T) {
 	level := 1000
 
 	// Act
-	result := GetNextLevelCountryCodes(level)
+	result := GetLevelCountryCodes(level)
 
 	for _, code := range result {
 		if len(code) != 2 {
@@ -24,7 +24,7 @@ func Test_CorrectNumberOfCountriesAreReturned_15(t *testing.T) {
 	expected := 1
 
 	// Act
-	result := GetNextLevelCountryCodes(level)
+	result := GetLevelCountryCodes(level)
 
 	// Assert
 	if len(result) != expected {
@@ -39,7 +39,7 @@ func Test_CorrectNumberOfCountriesAreReturned_30(t *testing.T) {
 	max := 3
 
 	// Act
-	result := GetNextLevelCountryCodes(level)
+	result := GetLevelCountryCodes(level)
 
 	// Assert
 	if len(result) < min && len(result) > max {
@@ -54,7 +54,7 @@ func Test_CorrectNumberOfCountriesAreReturned_50(t *testing.T) {
 	max := 4
 
 	// Act
-	result := GetNextLevelCountryCodes(level)
+	result := GetLevelCountryCodes(level)
 
 	// Assert
 	if len(result) < min && len(result) > max {
@@ -69,7 +69,7 @@ func Test_CorrectNumberOfCountriesAreReturned_100(t *testing.T) {
 	max := 5
 
 	// Act
-	result := GetNextLevelCountryCodes(level)
+	result := GetLevelCountryCodes(level)
 
 	// Assert
 	if len(result) < min && len(result) > max {
@@ -84,7 +84,7 @@ func Test_CorrectNumberOfCountriesAreReturned_250(t *testing.T) {
 	max := 10
 
 	// Act
-	result := GetNextLevelCountryCodes(level)
+	result := GetLevelCountryCodes(level)
 
 	// Assert
 	if len(result) < min && len(result) > max {
@@ -99,7 +99,7 @@ func Test_CorrectNumberOfCountriesAreReturned_500(t *testing.T) {
 	max := 16
 
 	// Act
-	result := GetNextLevelCountryCodes(level)
+	result := GetLevelCountryCodes(level)
 
 	// Assert
 	if len(result) < min && len(result) > max {
@@ -114,7 +114,7 @@ func Test_CorrectNumberOfCountriesAreReturned_1000(t *testing.T) {
 	max := 15
 
 	// Act
-	result := GetNextLevelCountryCodes(level)
+	result := GetLevelCountryCodes(level)
 
 	// Assert
 	if len(result) < min && len(result) > max {

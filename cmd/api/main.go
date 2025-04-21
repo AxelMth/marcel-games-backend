@@ -16,9 +16,11 @@ func main() {
 	r.SetTrustedProxies(nil)
 
 	r.POST("/launch", handlers.LaunchHandler)
+
+	r.GET("/level", handlers.GetLevelHandler)
 	// deprecated
-	r.POST("/end-level", handlers.LevelHandler)
-	r.POST("/level", handlers.LevelHandler)
+	r.POST("/end-level", handlers.FinishLevelHandler)
+	r.POST("/level", handlers.FinishLevelHandler)
 
 	fmt.Println("Starting server at port 8080")
 	if err := r.Run(":8080"); err != nil {
