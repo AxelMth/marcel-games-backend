@@ -6,7 +6,7 @@ import (
 	"slices"
 )
 
-func GetLevelCountryCodesForContinent(level int, continent string) []string {
+func GetLevelCountryCodesForContinent(level int, continent constants.Continent) []string {
 	countriesForContinent := getCountriesForContinent(continent)
 	sorted := sortCountriesByArea(countriesForContinent)
 
@@ -39,7 +39,7 @@ func GetLevelCountryCodesForLevel(level int) []string {
 	return result
 }
 
-func getCountriesForContinent(continent string) []constants.Country {
+func getCountriesForContinent(continent constants.Continent) []constants.Country {
 	result := make([]constants.Country, 0)
 	for _, country := range constants.Countries {
 		if country.Continent == continent {

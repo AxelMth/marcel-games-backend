@@ -1,11 +1,23 @@
 package constants
 
+type Continent string
+
+const (
+	Africa       Continent = "Africa"
+	Asia         Continent = "Asia"
+	Europe       Continent = "Europe"
+	NorthAmerica Continent = "North America"
+	SouthAmerica Continent = "South America"
+	Oceania      Continent = "Oceania"
+	Antarctica   Continent = "Antarctica"
+)
+
 type Country struct {
 	Name       string
 	Code       string
 	Population int64
 	Area       int64
-	Continent  string
+	Continent  Continent
 }
 
 var Countries = []Country{
