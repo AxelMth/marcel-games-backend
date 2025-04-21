@@ -50,8 +50,8 @@ func getCountriesForContinent(continent string) []constants.Country {
 }
 
 func sortCountriesByArea(countries []constants.Country) []constants.Country {
-	sorted := make([]constants.Country, len(constants.Countries))
-	copy(sorted, constants.Countries)
+	sorted := make([]constants.Country, len(countries))
+	copy(sorted, countries)
 	slices.SortFunc(sorted, func(i, j constants.Country) int {
 		if i.Area > j.Area {
 			return -1
