@@ -6,7 +6,7 @@ import (
 	"slices"
 )
 
-func GetLevelCountryCodes(level int) []string {
+func GetLevelCountryCodesForLevel(level int) []string {
 	sorted := sortCountriesByArea()
 
 	countryCount := getNumberOfCountries(level)

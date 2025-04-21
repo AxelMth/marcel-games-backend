@@ -32,11 +32,11 @@ func GetLevelHandler(c *gin.Context) {
 
 	var countryCodes []string
 	if req.GameMode == "levelOfTheDay" {
-		countryCodes = utils.GetLevelCountryCodes(currentLevel)
+		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
 	} else if req.GameMode == "world" {
-		countryCodes = utils.GetLevelCountryCodes(currentLevel)
+		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
 	} else if req.GameMode == "continents" {
-		countryCodes = utils.GetLevelCountryCodes(currentLevel)
+		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"level": currentLevel, "countryCodes": countryCodes})
@@ -77,6 +77,6 @@ func FinishLevelHandler(c *gin.Context) {
 		return
 	}
 
-	response := gin.H{"rank": rank, "nextLevel": level + 2, "nextCountryCodes": utils.GetLevelCountryCodes(level + 2)}
+	response := gin.H{"rank": rank, "nextLevel": level + 2, "nextCountryCodes": utils.GetLevelCountryCodesForLevel(level + 2)}
 	c.JSON(http.StatusOK, response)
 }

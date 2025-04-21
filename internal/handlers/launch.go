@@ -59,6 +59,6 @@ func LaunchHandler(c *gin.Context) {
 
 	currentLevel := repositories.GetLastLevelFromHistory(ctx, user.ID)
 
-	response := gin.H{"userId": user.ID, "level": currentLevel + 1, "countryCodes": utils.GetLevelCountryCodes(currentLevel + 1)}
+	response := gin.H{"userId": user.ID, "level": currentLevel + 1, "countryCodes": utils.GetLevelCountryCodesForLevel(currentLevel + 1)}
 	c.JSON(http.StatusOK, response)
 }
