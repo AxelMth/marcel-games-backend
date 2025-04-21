@@ -6,11 +6,12 @@ import (
 	"slices"
 )
 
-func GetLevelCountryCodesForLevel(level int) []string {
-	sorted := sortCountriesByArea()
+func GetLevelCountryCodesForContinent(level int, continent string) []string {
+	countriesForContinent := getCountriesForContinent(continent)
+	sorted := sortCountriesByArea(countriesForContinent)
 
 	countryCount := getNumberOfCountries(level)
-	countrySelectWindow := getCountrySelectWindow(level)
+	countrySelectWindow := getCountrySelectWindow(level, len(sorted))
 	availableCountries := sorted[:countryCount+countrySelectWindow]
 
 	result := make([]string, 0, countryCount)
@@ -22,7 +23,33 @@ func GetLevelCountryCodesForLevel(level int) []string {
 	return result
 }
 
-func sortCountriesByArea() []constants.Country {
+func GetLevelCountryCodesForLevel(level int) []string {
+	sorted := sortCountriesByArea(constants.Countries)
+
+	countryCount := getNumberOfCountries(level)
+	countrySelectWindow := getCountrySelectWindow(level, len(sorted))
+	availableCountries := sorted[:countryCount+countrySelectWindow]
+
+	result := make([]string, 0, countryCount)
+	indices := rand.Perm(len(availableCountries))[:countryCount]
+	for _, idx := range indices {
+		result = append(result, availableCountries[idx].Code)
+	}
+
+	return result
+}
+
+func getCountriesForContinent(continent string) []constants.Country {
+	result := make([]constants.Country, 0)
+	for _, country := range constants.Countries {
+		if country.Continent == continent {
+			result = append(result, country)
+		}
+	}
+	return result
+}
+
+func sortCountriesByArea(countries []constants.Country) []constants.Country {
 	sorted := make([]constants.Country, len(constants.Countries))
 	copy(sorted, constants.Countries)
 	slices.SortFunc(sorted, func(i, j constants.Country) int {
@@ -37,24 +64,24 @@ func sortCountriesByArea() []constants.Country {
 	return sorted
 }
 
-func getCountrySelectWindow(level int) int {
+func getCountrySelectWindow(level int, numberOfCountries int) int {
 	switch {
 	case level <= 15:
-		return 20
+		return int(float64(numberOfCountries) * 0.1)
 	case level <= 30:
-		return 30
+		return int(float64(numberOfCountries) * 0.2)
 	case level <= 50:
-		return 50
+		return int(float64(numberOfCountries) * 0.3)
 	case level <= 100:
-		return 75
+		return int(float64(numberOfCountries) * 0.4)
 	case level <= 250:
-		return 100
+		return int(float64(numberOfCountries) * 0.6)
 	case level <= 500:
-		return 150
+		return int(float64(numberOfCountries) * 0.75)
 	case level <= 1000:
-		return 200
+		return int(float64(numberOfCountries) * 0.85)
 	default:
-		return 200
+		return numberOfCountries
 	}
 }
 

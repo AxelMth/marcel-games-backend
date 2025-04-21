@@ -32,11 +32,13 @@ func GetLevelHandler(c *gin.Context) {
 
 	var countryCodes []string
 	if req.GameMode == "levelOfTheDay" {
+		// TODO: Store levelOfTheDay in DB and retrieve it from there
 		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
 	} else if req.GameMode == "world" {
 		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
 	} else if req.GameMode == "continents" {
-		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
+		// TODO: Add continent check
+		countryCodes = utils.GetLevelCountryCodesForContinent(currentLevel, req.Continent)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"level": currentLevel, "countryCodes": countryCodes})
