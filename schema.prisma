@@ -36,20 +36,21 @@ enum Continent {
 }
 
 model LevelHistory {
-  id        String    @id @default(uuid())
-  userId    String
-  level     Int
-  attempts  Int
-  timeSpent Int
-  gameMode  GameMode  @default(WORLD)
-  continent Continent @default(WORLD)
+  id           String    @id @default(uuid())
+  userId       String
+  level        Int
+  attempts     Int
+  timeSpent    Int
+  gameMode     GameMode  @default(WORLD)
+  continent    Continent @default(WORLD)
+  countryCodes String[]  @default([])
 
   user User @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
   // updatedAt DateTime @updatedAt
 
-  @@unique([userId, level])
+  @@unique([userId, level, gameMode, continent])
 }
 
 model LevelOfTheDay {

@@ -12,8 +12,10 @@ import (
 )
 
 type GetLevelInfo struct {
-	UserID    string `form:"userId" binding:"required"`
-	GameMode  string `form:"gameMode" binding:"required"`
+	UserID string `form:"userId" binding:"required"`
+	// TODO: Add game mode validation
+	GameMode string `form:"gameMode" binding:"required"`
+	// TODO: Add continent validation
 	Continent string `form:"continent"`
 }
 
@@ -32,18 +34,18 @@ func GetLevelHandler(c *gin.Context) {
 
 	ctx := context.Background()
 
-	level := repositories.GetLastLevelFromHistory(ctx, req.UserID)
+	level := repositories.GetLastLevelFromHistory(ctx, req.UserID, req.GameMode, req.Continent)
 
 	currentLevel := level + 1
 
 	var countryCodes []string
-	if req.GameMode == "levelOfTheDay" {
+	if req.GameMode == "LEVEL_OF_THE_DAY" {
 		// TODO: Store levelOfTheDay in DB and retrieve it from there
 		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
-	} else if req.GameMode == "world" {
+	} else if req.GameMode == "WORLD" {
 		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
-	} else if req.GameMode == "continents" {
-		// TODO: Add continent check
+	} else if req.GameMode == "CONTINENTS" {
+		// TODO: Add continent check (e.g. Africa, Americas, Asia, Europe, Oceania)
 		continent := constants.Continent(req.Continent)
 		countryCodes = utils.GetLevelCountryCodesForContinent(currentLevel, continent)
 	}
@@ -60,6 +62,12 @@ type FinishLevelInfo struct {
 	UserID    string `json:"userId"`
 	Attempts  int    `json:"attempts"`
 	TimeSpent int    `json:"timeSpent"`
+	// TODO: Add game mode validation
+	GameMode string `json:"gameMode"`
+	// TODO: Add continent validation
+	Continent string `json:"continent"`
+	// TODO: Add country codes validation
+	CountryCodes []string `json:"countryCodes"`
 }
 
 type FinishLevelResponse struct {
@@ -77,7 +85,7 @@ func FinishLevelHandler(c *gin.Context) {
 
 	ctx := context.Background()
 
-	level := repositories.GetLastLevelFromHistory(ctx, req.UserID)
+	level := repositories.GetLastLevelFromHistory(ctx, req.UserID, req.GameMode, req.Continent)
 
 	_, err := repositories.CreateOneLevelHistory(
 		ctx,
@@ -85,6 +93,9 @@ func FinishLevelHandler(c *gin.Context) {
 		level+1,
 		req.Attempts,
 		req.TimeSpent,
+		req.GameMode,
+		req.Continent,
+		req.CountryCodes,
 	)
 
 	if err != nil {

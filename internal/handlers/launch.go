@@ -19,6 +19,8 @@ type LaunchRequest struct {
 	ModelName    string `json:"modelName"`
 	OsName       string `json:"osName"`
 	OsVersion    string `json:"osVersion"`
+	GameMode     string `json:"gameMode"`
+	Continent    string `json:"continent"`
 }
 
 func LaunchHandler(c *gin.Context) {
@@ -57,7 +59,7 @@ func LaunchHandler(c *gin.Context) {
 		return
 	}
 
-	currentLevel := repositories.GetLastLevelFromHistory(ctx, user.ID)
+	currentLevel := repositories.GetLastLevelFromHistory(ctx, user.ID, req.GameMode, req.Continent)
 
 	response := gin.H{"userId": user.ID, "level": currentLevel + 1, "countryCodes": utils.GetLevelCountryCodesForLevel(currentLevel + 1)}
 	c.JSON(http.StatusOK, response)
