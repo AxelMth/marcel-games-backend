@@ -8,37 +8,72 @@ datasource db {
 }
 
 model User {
-  id          String      @id @default(uuid())
-  deviceUuid  String      @unique
-  lastLogin   DateTime
-  openCount   Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  deviceUuid String   @unique
+  lastLogin  DateTime
+  openCount  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   levelHistories LevelHistory[]
-  devices     UserDevice[]
+  devices        UserDevice[]
+}
+
+enum GameMode {
+  LEVEL_OF_THE_DAY
+  WORLD
+  CONTINENTS
+}
+
+enum Continent {
+  WORLD
+  AFRICA
+  AMERICAS
+  ASIA
+  EUROPE
+  OCEANIA
 }
 
 model LevelHistory {
-  id        String   @id @default(uuid())
-  userId    String   
+  id        String    @id @default(uuid())
+  userId    String
   level     Int
   attempts  Int
   timeSpent Int
-  rank      Int
-  user      User     @relation(fields: [userId], references: [id])
+  gameMode  GameMode  @default(WORLD)
+  continent Continent @default(WORLD)
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  // updatedAt DateTime @updatedAt
 
   @@unique([userId, level])
 }
 
+model LevelOfTheDay {
+  id           String   @id @default(uuid())
+  date         DateTime @unique
+  countryCodes String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model UserDevice {
-  id        String   @id @default(uuid())
-  userId      String @unique
-  brand       String
-  deviceType  String
-  isDevice    Boolean
+  id           String  @id @default(uuid())
+  userId       String  @unique
+  brand        String
+  deviceType   String
+  isDevice     Boolean
   manufacturer String
-  modelName   String
-  osName      String
-  osVersion   String
-  user        User     @relation(fields: [userId], references: [id])
+  modelName    String
+  osName       String
+  osVersion    String
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  // updatedAt DateTime @updatedAt
 }
