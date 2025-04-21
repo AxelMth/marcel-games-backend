@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"marcel-games-backend/internal/constants"
 	"marcel-games-backend/internal/repositories"
 	"marcel-games-backend/pkg/utils"
 	"net/http"
@@ -14,6 +15,11 @@ type GetLevelInfo struct {
 	UserID    string `form:"userId" binding:"required"`
 	GameMode  string `form:"gameMode" binding:"required"`
 	Continent string `form:"continent"`
+}
+
+type GetLevelInfoResponse struct {
+	Level        int      `json:"level"`
+	CountryCodes []string `json:"countryCodes"`
 }
 
 func GetLevelHandler(c *gin.Context) {
@@ -38,16 +44,28 @@ func GetLevelHandler(c *gin.Context) {
 		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
 	} else if req.GameMode == "continents" {
 		// TODO: Add continent check
-		countryCodes = utils.GetLevelCountryCodesForContinent(currentLevel, req.Continent)
+		continent := constants.Continent(req.Continent)
+		countryCodes = utils.GetLevelCountryCodesForContinent(currentLevel, continent)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"level": currentLevel, "countryCodes": countryCodes})
+	response := GetLevelInfoResponse{
+		Level:        currentLevel,
+		CountryCodes: countryCodes,
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 type FinishLevelInfo struct {
 	UserID    string `json:"userId"`
 	Attempts  int    `json:"attempts"`
 	TimeSpent int    `json:"timeSpent"`
+}
+
+type FinishLevelResponse struct {
+	Rank             int      `json:"rank"`
+	NextLevel        int      `json:"nextLevel"`
+	NextCountryCodes []string `json:"nextCountryCodes"`
 }
 
 func FinishLevelHandler(c *gin.Context) {
@@ -79,6 +97,11 @@ func FinishLevelHandler(c *gin.Context) {
 		return
 	}
 
-	response := gin.H{"rank": rank, "nextLevel": level + 2, "nextCountryCodes": utils.GetLevelCountryCodesForLevel(level + 2)}
+	response := FinishLevelResponse{
+		Rank:             rank,
+		NextLevel:        level + 2,
+		NextCountryCodes: utils.GetLevelCountryCodesForLevel(level + 2),
+	}
+
 	c.JSON(http.StatusOK, response)
 }
