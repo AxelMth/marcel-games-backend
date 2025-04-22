@@ -38,17 +38,7 @@ func GetLevelHandler(c *gin.Context) {
 
 	currentLevel := level + 1
 
-	var countryCodes []string
-	if req.GameMode == "LEVEL_OF_THE_DAY" {
-		// TODO: Store levelOfTheDay in DB and retrieve it from there
-		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
-	} else if req.GameMode == "WORLD" {
-		countryCodes = utils.GetLevelCountryCodesForLevel(currentLevel)
-	} else if req.GameMode == "CONTINENTS" {
-		// TODO: Add continent check (e.g. Africa, Americas, Asia, Europe, Oceania)
-		continent := constants.Continent(req.Continent)
-		countryCodes = utils.GetLevelCountryCodesForContinent(currentLevel, continent)
-	}
+	countryCodes := getCountryCodes(req.GameMode, req.Continent, currentLevel)
 
 	response := GetLevelInfoResponse{
 		Level:        currentLevel,
@@ -104,10 +94,28 @@ func FinishLevelHandler(c *gin.Context) {
 		return
 	}
 
+	nextLevel := level + 2
+	countryCodes := getCountryCodes(req.GameMode, req.Continent, nextLevel)
+
 	response := FinishLevelResponse{
-		NextLevel:        level + 2,
-		NextCountryCodes: utils.GetLevelCountryCodesForLevel(level + 2),
+		NextLevel:        nextLevel,
+		NextCountryCodes: countryCodes,
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func getCountryCodes(gameMode string, continent string, level int) []string {
+	var countryCodes []string
+	if gameMode == "LEVEL_OF_THE_DAY" {
+		// TODO: Store levelOfTheDay in DB and retrieve it from there
+		countryCodes = utils.GetLevelCountryCodesForLevel(level)
+	} else if gameMode == "WORLD" {
+		countryCodes = utils.GetLevelCountryCodesForLevel(level)
+	} else if gameMode == "CONTINENTS" {
+		// TODO: Add continent check (e.g. Africa, Americas, Asia, Europe, Oceania)
+		continent := constants.Continent(continent)
+		countryCodes = utils.GetLevelCountryCodesForContinent(level, continent)
+	}
+	return countryCodes
 }
