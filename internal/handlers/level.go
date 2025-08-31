@@ -20,8 +20,15 @@ type GetLevelInfo struct {
 }
 
 type GetLevelInfoResponse struct {
-	Level        int      `json:"level"`
-	CountryCodes []string `json:"countryCodes"`
+	Level        int              `json:"level"`
+	CountryCodes []string         `json:"countryCodes"`
+	Stats        *DailyLevelStats `json:"stats,omitempty"`
+}
+
+type DailyLevelStats struct {
+	DailyLevelsCompleted int `json:"dailyLevelsCompleted"`
+	LastLevelRank        int `json:"lastLevelRank"`
+	GlobalRank           int `json:"globalRank"`
 }
 
 func GetLevelHandler(c *gin.Context) {
@@ -36,6 +43,7 @@ func GetLevelHandler(c *gin.Context) {
 
 	var currentLevel int
 	var countryCodes []string
+	var stats *DailyLevelStats
 
 	fmt.Println("req.GameMode", req.GameMode)
 	if req.GameMode == "LEVEL_OF_THE_DAY" {
@@ -50,6 +58,17 @@ func GetLevelHandler(c *gin.Context) {
 			countryCodes = repositories.GetLevelOfTheDayCountryCodes(ctx)
 			currentLevel = 1
 		}
+
+		// Calculate daily level statistics
+		dailyLevelsCompleted := repositories.GetUserDailyLevelCount(ctx, req.UserID)
+		lastLevelRank, _ := repositories.GetUserRankForLastDailyLevel(ctx, req.UserID)
+		globalRank, _ := repositories.GetUserGlobalDailyRank(ctx, req.UserID)
+
+		stats = &DailyLevelStats{
+			DailyLevelsCompleted: dailyLevelsCompleted,
+			LastLevelRank:        lastLevelRank,
+			GlobalRank:           globalRank,
+		}
 	} else {
 		// For other game modes, get the last level and increment
 		level := repositories.GetLastLevelFromHistory(ctx, req.UserID, req.GameMode, req.Continent)
@@ -60,6 +79,7 @@ func GetLevelHandler(c *gin.Context) {
 	response := GetLevelInfoResponse{
 		Level:        currentLevel,
 		CountryCodes: countryCodes,
+		Stats:        stats,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -78,8 +98,9 @@ type FinishLevelInfo struct {
 }
 
 type FinishLevelResponse struct {
-	NextLevel        int      `json:"nextLevel"`
-	NextCountryCodes []string `json:"nextCountryCodes"`
+	NextLevel        int              `json:"nextLevel"`
+	NextCountryCodes []string         `json:"nextCountryCodes"`
+	Stats            *DailyLevelStats `json:"stats,omitempty"`
 }
 
 func FinishLevelHandler(c *gin.Context) {
@@ -113,11 +134,23 @@ func FinishLevelHandler(c *gin.Context) {
 
 	var nextLevel int
 	var countryCodes []string
+	var stats *DailyLevelStats
 
 	if req.GameMode == "LEVEL_OF_THE_DAY" {
 		// For level of the day, return empty country codes after completion
 		nextLevel = 1
 		countryCodes = []string{}
+
+		// Calculate updated daily level statistics after completion
+		dailyLevelsCompleted := repositories.GetUserDailyLevelCount(ctx, req.UserID)
+		lastLevelRank, _ := repositories.GetUserRankForLastDailyLevel(ctx, req.UserID)
+		globalRank, _ := repositories.GetUserGlobalDailyRank(ctx, req.UserID)
+
+		stats = &DailyLevelStats{
+			DailyLevelsCompleted: dailyLevelsCompleted,
+			LastLevelRank:        lastLevelRank,
+			GlobalRank:           globalRank,
+		}
 	} else {
 		nextLevel = level + 2
 		countryCodes = getCountryCodes(req.GameMode, req.Continent, nextLevel)
@@ -126,6 +159,7 @@ func FinishLevelHandler(c *gin.Context) {
 	response := FinishLevelResponse{
 		NextLevel:        nextLevel,
 		NextCountryCodes: countryCodes,
+		Stats:            stats,
 	}
 
 	c.JSON(http.StatusOK, response)
