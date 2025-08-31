@@ -41,7 +41,6 @@ func GetLevelHandler(c *gin.Context) {
 	if req.GameMode == "LEVEL_OF_THE_DAY" {
 		// Check if user has already completed today's level
 		hasCompletedToday := repositories.HasUserCompletedTodaysLevel(ctx, req.UserID)
-		fmt.Println("hasCompletedToday", hasCompletedToday)
 		if hasCompletedToday {
 			// Return empty country codes if already completed
 			countryCodes = []string{}
@@ -58,8 +57,6 @@ func GetLevelHandler(c *gin.Context) {
 		countryCodes = getCountryCodes(req.GameMode, req.Continent, currentLevel)
 	}
 
-	fmt.Println("currentLevel", currentLevel)
-	fmt.Println("countryCodes", countryCodes)
 	response := GetLevelInfoResponse{
 		Level:        currentLevel,
 		CountryCodes: countryCodes,

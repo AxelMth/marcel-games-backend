@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"fmt"
 	"marcel-games-backend/db"
 	"time"
 )
@@ -14,16 +13,11 @@ func GetLevelOfTheDayCountryCodes(ctx context.Context) []string {
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	todayEnd := todayStart.Add(24 * time.Hour)
 
-	fmt.Println("todayStart", todayStart)
-	fmt.Println("todayEnd", todayEnd)
-
 	levelOfTheDay, err := db.Client().LevelOfTheDay.FindFirst(
 		db.LevelOfTheDay.Date.Gte(todayStart),
 		db.LevelOfTheDay.Date.Lt(todayEnd),
 	).Exec(ctx)
 
-	fmt.Println("levelOfTheDay", levelOfTheDay)
-	fmt.Println("err", err)
 	if err != nil {
 		return []string{}
 	}
