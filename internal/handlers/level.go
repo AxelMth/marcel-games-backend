@@ -34,12 +34,32 @@ func GetLevelHandler(c *gin.Context) {
 
 	ctx := context.Background()
 
-	level := repositories.GetLastLevelFromHistory(ctx, req.UserID, req.GameMode, req.Continent)
+	var currentLevel int
+	var countryCodes []string
 
-	currentLevel := level + 1
+	fmt.Println("req.GameMode", req.GameMode)
+	if req.GameMode == "LEVEL_OF_THE_DAY" {
+		// Check if user has already completed today's level
+		hasCompletedToday := repositories.HasUserCompletedTodaysLevel(ctx, req.UserID)
+		fmt.Println("hasCompletedToday", hasCompletedToday)
+		if hasCompletedToday {
+			// Return empty country codes if already completed
+			countryCodes = []string{}
+			currentLevel = 1 // Level of the day is always level 1
+		} else {
+			// Get today's country codes
+			countryCodes = repositories.GetLevelOfTheDayCountryCodes(ctx)
+			currentLevel = 1
+		}
+	} else {
+		// For other game modes, get the last level and increment
+		level := repositories.GetLastLevelFromHistory(ctx, req.UserID, req.GameMode, req.Continent)
+		currentLevel = level + 1
+		countryCodes = getCountryCodes(req.GameMode, req.Continent, currentLevel)
+	}
 
-	countryCodes := getCountryCodes(req.GameMode, req.Continent, currentLevel)
-
+	fmt.Println("currentLevel", currentLevel)
+	fmt.Println("countryCodes", countryCodes)
 	response := GetLevelInfoResponse{
 		Level:        currentLevel,
 		CountryCodes: countryCodes,
@@ -94,8 +114,17 @@ func FinishLevelHandler(c *gin.Context) {
 		return
 	}
 
-	nextLevel := level + 2
-	countryCodes := getCountryCodes(req.GameMode, req.Continent, nextLevel)
+	var nextLevel int
+	var countryCodes []string
+
+	if req.GameMode == "LEVEL_OF_THE_DAY" {
+		// For level of the day, return empty country codes after completion
+		nextLevel = 1
+		countryCodes = []string{}
+	} else {
+		nextLevel = level + 2
+		countryCodes = getCountryCodes(req.GameMode, req.Continent, nextLevel)
+	}
 
 	response := FinishLevelResponse{
 		NextLevel:        nextLevel,
@@ -107,15 +136,12 @@ func FinishLevelHandler(c *gin.Context) {
 
 func getCountryCodes(gameMode string, continent string, level int) []string {
 	var countryCodes []string
-	if gameMode == "LEVEL_OF_THE_DAY" {
-		// TODO: Store levelOfTheDay in DB and retrieve it from there
-		countryCodes = utils.GetLevelCountryCodesForLevel(level)
-	} else if gameMode == "WORLD" {
+	if gameMode == "WORLD" {
 		countryCodes = utils.GetLevelCountryCodesForLevel(level)
 	} else if gameMode == "CONTINENTS" {
 		// TODO: Add continent check (e.g. Africa, Americas, Asia, Europe, Oceania)
-		continent := constants.Continent(continent)
-		countryCodes = utils.GetLevelCountryCodesForContinent(level, continent)
+		continentEnum := constants.Continent(continent)
+		countryCodes = utils.GetLevelCountryCodesForContinent(level, continentEnum)
 	}
 	return countryCodes
 }
