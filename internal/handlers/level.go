@@ -111,6 +111,16 @@ func FinishLevelHandler(c *gin.Context) {
 		return
 	}
 
+	if req.UserID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User ID is required"})
+		return
+	}
+
+	// Continent is required by DB enum; default to WORLD for world/daily modes when client sends empty
+	if req.Continent == "" {
+		req.Continent = "WORLD"
+	}
+
 	ctx := context.Background()
 
 	level := repositories.GetLastLevelFromHistory(ctx, req.UserID, req.GameMode, req.Continent)

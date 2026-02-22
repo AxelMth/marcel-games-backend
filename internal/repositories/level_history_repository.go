@@ -16,6 +16,9 @@ func CreateOneLevelHistory(
 	continent string,
 	countryCodes []string,
 ) (*db.LevelHistoryModel, error) {
+	if continent == "" {
+		continent = "WORLD"
+	}
 	levelHistory, err := db.Client().LevelHistory.CreateOne(
 		db.LevelHistory.Level.Set(level),
 		db.LevelHistory.Attempts.Set(attempts),
