@@ -28,6 +28,7 @@ func main() {
 	r.POST("/launch", handlers.LaunchHandler)
 
 	r.GET("/progress", handlers.GetProgressHandler)
+	r.GET("/profile", handlers.GetProfileHandler)
 	r.GET("/level", handlers.GetLevelHandler)
 	// deprecated
 	r.POST("/end-level", handlers.FinishLevelHandler)

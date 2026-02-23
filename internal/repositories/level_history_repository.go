@@ -251,3 +251,43 @@ func GetUserGlobalDailyRank(ctx context.Context, userID string) (int, error) {
 
 	return betterUsersCount + 1, nil
 }
+
+// GameHistoryEntry holds a single level history record for the profile API
+type GameHistoryEntry struct {
+	Level      int       `json:"level"`
+	GameMode   string    `json:"gameMode"`
+	Continent  string    `json:"continent"`
+	Attempts   int       `json:"attempts"`
+	TimeSpent  int       `json:"timeSpent"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
+// GetUserLevelHistory returns recent level history for a user, ordered by createdAt DESC
+func GetUserLevelHistory(ctx context.Context, userID string, limit int) ([]GameHistoryEntry, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	allHistories, err := db.Client().LevelHistory.FindMany(
+		db.LevelHistory.UserID.Equals(userID),
+	).OrderBy(
+		db.LevelHistory.CreatedAt.Order(db.DESC),
+	).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	entries := make([]GameHistoryEntry, 0, len(allHistories))
+	for i, h := range allHistories {
+		if limit > 0 && i >= limit {
+			break
+		}
+		entries = append(entries, GameHistoryEntry{
+			Level:     h.Level,
+			GameMode:  string(h.GameMode),
+			Continent: string(h.Continent),
+			Attempts:  h.Attempts,
+			TimeSpent: h.TimeSpent,
+			CreatedAt: h.CreatedAt,
+		})
+	}
+	return entries, nil
+}
