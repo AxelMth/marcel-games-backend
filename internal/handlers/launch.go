@@ -59,7 +59,12 @@ func LaunchHandler(c *gin.Context) {
 		return
 	}
 
-	currentLevel := repositories.GetLastLevelFromHistory(ctx, user.ID, req.GameMode, req.Continent)
+	// Normalize continent for world/daily so it matches stored level history
+	continent := req.Continent
+	if continent == "" && (req.GameMode == "WORLD" || req.GameMode == "LEVEL_OF_THE_DAY") {
+		continent = "WORLD"
+	}
+	currentLevel := repositories.GetLastLevelFromHistory(ctx, user.ID, req.GameMode, continent)
 
 	response := gin.H{"userId": user.ID, "level": currentLevel + 1, "countryCodes": utils.GetLevelCountryCodesForLevel(currentLevel + 1)}
 	c.JSON(http.StatusOK, response)
