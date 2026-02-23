@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"marcel-games-backend/db"
+	"marcel-games-backend/internal/domain"
 	"time"
 )
 
@@ -12,6 +13,7 @@ func CreateOneLevelHistory(
 	level int,
 	attempts int,
 	timeSpent int,
+	hintsUsed int,
 	gameMode string,
 	continent string,
 	countryCodes []string,
@@ -27,6 +29,7 @@ func CreateOneLevelHistory(
 		db.LevelHistory.GameMode.Set(db.GameMode(gameMode)),
 		db.LevelHistory.Continent.Set(db.Continent(continent)),
 		db.LevelHistory.CountryCodes.Set(countryCodes),
+		db.LevelHistory.HintsUsed.Set(hintsUsed),
 	).Exec(ctx)
 	return levelHistory, err
 }
@@ -254,12 +257,74 @@ func GetUserGlobalDailyRank(ctx context.Context, userID string) (int, error) {
 
 // GameHistoryEntry holds a single level history record for the profile API
 type GameHistoryEntry struct {
-	Level      int       `json:"level"`
-	GameMode   string    `json:"gameMode"`
-	Continent  string    `json:"continent"`
-	Attempts   int       `json:"attempts"`
-	TimeSpent  int       `json:"timeSpent"`
-	CreatedAt  time.Time `json:"createdAt"`
+	Level     int    `json:"level"`
+	GameMode  string `json:"gameMode"`
+	Continent string `json:"continent"`
+	Stars     int    `json:"stars"`
+	Rank      int    `json:"rank"`
+}
+
+// getRankForLevelEntry returns the user's rank for a given level history entry.
+// For LEVEL_OF_THE_DAY: scope by createdAt day.
+// For WORLD/CONTINENTS: scope by level, gameMode, continent.
+func getRankForLevelEntry(ctx context.Context, h db.LevelHistoryModel) (int, error) {
+	var dayStart, dayEnd time.Time
+	if string(h.GameMode) == "LEVEL_OF_THE_DAY" {
+		levelDate := h.CreatedAt
+		dayStart = time.Date(levelDate.Year(), levelDate.Month(), levelDate.Day(), 0, 0, 0, 0, levelDate.Location())
+		dayEnd = dayStart.Add(24 * time.Hour)
+	}
+
+	var fewerAttempts, sameAttemptsLessTime []db.LevelHistoryModel
+	var err error
+
+	if string(h.GameMode) == "LEVEL_OF_THE_DAY" {
+		fewerAttempts, err = db.Client().LevelHistory.FindMany(
+			db.LevelHistory.GameMode.Equals(db.GameMode("LEVEL_OF_THE_DAY")),
+			db.LevelHistory.CreatedAt.Gte(dayStart),
+			db.LevelHistory.CreatedAt.Lt(dayEnd),
+			db.LevelHistory.Attempts.Lt(h.Attempts),
+		).Exec(ctx)
+		if err != nil {
+			return 0, err
+		}
+		sameAttemptsLessTime, err = db.Client().LevelHistory.FindMany(
+			db.LevelHistory.GameMode.Equals(db.GameMode("LEVEL_OF_THE_DAY")),
+			db.LevelHistory.CreatedAt.Gte(dayStart),
+			db.LevelHistory.CreatedAt.Lt(dayEnd),
+			db.LevelHistory.Attempts.Equals(h.Attempts),
+			db.LevelHistory.TimeSpent.Lt(h.TimeSpent),
+		).Exec(ctx)
+	} else {
+		fewerAttempts, err = db.Client().LevelHistory.FindMany(
+			db.LevelHistory.Level.Equals(h.Level),
+			db.LevelHistory.GameMode.Equals(h.GameMode),
+			db.LevelHistory.Continent.Equals(h.Continent),
+			db.LevelHistory.Attempts.Lt(h.Attempts),
+		).Exec(ctx)
+		if err != nil {
+			return 0, err
+		}
+		sameAttemptsLessTime, err = db.Client().LevelHistory.FindMany(
+			db.LevelHistory.Level.Equals(h.Level),
+			db.LevelHistory.GameMode.Equals(h.GameMode),
+			db.LevelHistory.Continent.Equals(h.Continent),
+			db.LevelHistory.Attempts.Equals(h.Attempts),
+			db.LevelHistory.TimeSpent.Lt(h.TimeSpent),
+		).Exec(ctx)
+	}
+	if err != nil {
+		return 0, err
+	}
+
+	betterUsersMap := make(map[string]bool)
+	for _, history := range fewerAttempts {
+		betterUsersMap[history.UserID] = true
+	}
+	for _, history := range sameAttemptsLessTime {
+		betterUsersMap[history.UserID] = true
+	}
+	return len(betterUsersMap) + 1, nil
 }
 
 // GetUserLevelHistory returns recent level history for a user, ordered by createdAt DESC
@@ -280,13 +345,18 @@ func GetUserLevelHistory(ctx context.Context, userID string, limit int) ([]GameH
 		if limit > 0 && i >= limit {
 			break
 		}
+		countryCount := len(h.CountryCodes)
+		if countryCount == 0 {
+			countryCount = 1
+		}
+		stars := domain.ComputeStars(h.Attempts, countryCount, h.HintsUsed)
+		rank, _ := getRankForLevelEntry(ctx, h)
 		entries = append(entries, GameHistoryEntry{
 			Level:     h.Level,
 			GameMode:  string(h.GameMode),
 			Continent: string(h.Continent),
-			Attempts:  h.Attempts,
-			TimeSpent: h.TimeSpent,
-			CreatedAt: h.CreatedAt,
+			Stars:     stars,
+			Rank:      rank,
 		})
 	}
 	return entries, nil

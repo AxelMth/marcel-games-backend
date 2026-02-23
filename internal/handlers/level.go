@@ -91,14 +91,12 @@ func GetLevelHandler(c *gin.Context) {
 }
 
 type FinishLevelInfo struct {
-	UserID    string `json:"userId"`
-	Attempts  int    `json:"attempts"`
-	TimeSpent int    `json:"timeSpent"`
-	// TODO: Add game mode validation
-	GameMode string `json:"gameMode"`
-	// TODO: Add continent validation
-	Continent string `json:"continent"`
-	// TODO: Add country codes validation
+	UserID       string   `json:"userId"`
+	Attempts     int      `json:"attempts"`
+	TimeSpent    int      `json:"timeSpent"`
+	HintsUsed    int      `json:"hintsUsed"`
+	GameMode     string   `json:"gameMode"`
+	Continent    string   `json:"continent"`
 	CountryCodes []string `json:"countryCodes"`
 }
 
@@ -136,6 +134,7 @@ func FinishLevelHandler(c *gin.Context) {
 		level+1,
 		req.Attempts,
 		req.TimeSpent,
+		req.HintsUsed,
 		req.GameMode,
 		req.Continent,
 		req.CountryCodes,

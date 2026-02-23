@@ -41,6 +41,7 @@ model LevelHistory {
   level        Int
   attempts     Int
   timeSpent    Int
+  hintsUsed    Int       @default(0)
   gameMode     GameMode  @default(WORLD)
   continent    Continent @default(WORLD)
   countryCodes String[]  @default([])
