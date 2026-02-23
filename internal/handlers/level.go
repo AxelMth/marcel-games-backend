@@ -39,6 +39,11 @@ func GetLevelHandler(c *gin.Context) {
 		return
 	}
 
+	// Normalize continent for world/daily so it matches stored level history (same as FinishLevelHandler)
+	if req.Continent == "" && (req.GameMode == "WORLD" || req.GameMode == "LEVEL_OF_THE_DAY") {
+		req.Continent = "WORLD"
+	}
+
 	ctx := context.Background()
 
 	var currentLevel int
@@ -185,4 +190,65 @@ func getCountryCodes(gameMode string, continent string, level int) []string {
 		countryCodes = utils.GetLevelCountryCodesForContinent(level, continentEnum)
 	}
 	return countryCodes
+}
+
+// Progress response for carousel: current level per mode and daily completion.
+var progressContinents = []string{"EUROPE", "ASIA", "AMERICAS", "AFRICA", "OCEANIA"}
+
+type GetProgressInfo struct {
+	UserID string `form:"userId" binding:"required"`
+}
+
+type GetProgressResponse struct {
+	WorldLevel      int               `json:"worldLevel"`
+	ContinentLevels map[string]int    `json:"continentLevels"`
+	DailyCompleted  bool              `json:"dailyCompleted"`
+	Stats           *DailyLevelStats  `json:"stats,omitempty"`
+}
+
+func GetProgressHandler(c *gin.Context) {
+	var req GetProgressInfo
+	if err := c.ShouldBindQuery(&req); err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid query parameters"})
+		return
+	}
+
+	ctx := context.Background()
+
+	worldLast := repositories.GetLastLevelFromHistory(ctx, req.UserID, "WORLD", "WORLD")
+	worldLevel := worldLast + 1
+	if worldLevel < 1 {
+		worldLevel = 1
+	}
+
+	continentLevels := make(map[string]int)
+	for _, cont := range progressContinents {
+		last := repositories.GetLastLevelFromHistory(ctx, req.UserID, "CONTINENTS", cont)
+		level := last + 1
+		if level < 1 {
+			level = 1
+		}
+		continentLevels[cont] = level
+	}
+
+	dailyCompleted := repositories.HasUserCompletedTodaysLevel(ctx, req.UserID)
+
+	var stats *DailyLevelStats
+	dailyLevelsCompleted := repositories.GetUserDailyLevelCount(ctx, req.UserID)
+	lastLevelRank, _ := repositories.GetUserRankForLastDailyLevel(ctx, req.UserID)
+	globalRank, _ := repositories.GetUserGlobalDailyRank(ctx, req.UserID)
+	stats = &DailyLevelStats{
+		DailyLevelsCompleted: dailyLevelsCompleted,
+		LastLevelRank:        lastLevelRank,
+		GlobalRank:           globalRank,
+	}
+
+	response := GetProgressResponse{
+		WorldLevel:      worldLevel,
+		ContinentLevels: continentLevels,
+		DailyCompleted:  dailyCompleted,
+		Stats:           stats,
+	}
+	c.JSON(http.StatusOK, response)
 }
